@@ -3,7 +3,6 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import datetime
 
-# Page Configuration
 st.set_page_config(page_title="CVD Research Tool", layout="wide")
 
 # Authentication Logic
@@ -19,16 +18,12 @@ def login():
         else: st.error("Incorrect credentials")
 if not st.session_state.auth: login(); st.stop()
 
-# Connection to Google Sheets
 conn = st.connection("gsheets", type=GSheetsConnection)
-
 st.title("📋 CVD Event Data Abstraction Portal")
-st.info("**Instructions:** Please complete each section accurately as per the medical records.")
 
-# የዳታ መሰብሰቢያ ፎርም - ሴክሽኖችን በTabs መለየት
 with st.form("cvd_research_form", clear_on_submit=True):
     
-    # --- SECTION 1 & 2: ADMINISTRATIVE & ELIGIBILITY ---
+    # --- SECTION 1 & 2 ---
     st.markdown("### Section 1 & 2: Administrative & Eligibility")
     col1, col2 = st.columns(2)
     with col1:
@@ -37,7 +32,7 @@ with st.form("cvd_research_form", clear_on_submit=True):
         mrn = st.text_input("1.3. Patient MRN*")
     with col2:
         cohort = st.selectbox("1.4. Cohort Group", ["1=Exposed (Hypertensive)", "2=Unexposed (Normotensive)"])
-        d_enroll = st.text_input("1.5. Date of Enrollment (E.C.)", placeholder="DD/MM/YYYY")
+        d_enroll = st.text_input("1.5. Date of Enrollment (E.C.)")
         d_end = st.text_input("1.6. Follow-up End Date (E.C.)", value="30/10/2018")
     
     st.write("**Eligibility Checklist:**")
@@ -57,7 +52,7 @@ with st.form("cvd_research_form", clear_on_submit=True):
     with col4:
         edu = st.selectbox("3.4. Educational Status", ["1=No formal", "2=Primary (1-8)", "3=Secondary (9-12)", "4=Higher"])
         occ = st.selectbox("3.5. Occupational Status", ["1=Gov Employee", "2=Merchant/Trader", "3=Farmer", "4=Unemployed", "5=Other"])
-        occ_oth = st.text_input("3.5.1. Specify Other Occupation") if "Other" in occ else "NA"
+        occ_oth = st.text_input("3.5.1. Specify Other Occupation (If 3.5 is Other)")
         marital = st.selectbox("3.6. Marital Status", ["1=Single", "2=Married", "3=Widowed", "4=Divorced/Separated"])
     st.divider()
 
@@ -65,11 +60,11 @@ with st.form("cvd_research_form", clear_on_submit=True):
     st.markdown("### Section 4: Lifestyle & Behavioral Factors")
     col5, col6 = st.columns(2)
     with col5:
-        tob = st.selectbox("4.1. Tobacco Use", ["1=Never", "2=Current", "3=Previous"])
+        tob = st.selectbox("4.1. Tobacco Use", ["1=Never Smoker", "2=Current Smoker", "3=Previous Smoker"])
         alc = st.selectbox("4.2. Alcohol Consumption", ["1=Non-user", "2=Current User"])
-        alc_qty = st.text_input("4.2.1. Average drinks/day") if "Current User" in alc else "0"
+        alc_qty = st.text_input("4.2.1. Average drinks/day (If Current User)")
     with col6:
-        khat = st.selectbox("4.3. Khat Chewing", ["1=Never", "2=Current", "3=History"])
+        khat = st.selectbox("4.3. Khat Chewing", ["1=Never", "2=Current User", "3=History of regular use"])
         phys = st.selectbox("4.4. Physical Activity (≥30 min/day)", ["1=Active", "2=Inactive"])
         salt = st.selectbox("4.5. Salt Intake", ["1=High (Adds salt)", "2=Normal/Low"])
     st.divider()
@@ -96,7 +91,7 @@ with st.form("cvd_research_form", clear_on_submit=True):
         weight = st.number_input("5.3.1. Weight (kg)", min_value=0.0)
         height = st.number_input("5.3.2. Height (cm)", min_value=0.0)
         
-        # 5.3 & 5.4 BMI Calculation Logic
+        # BMI Calculation
         bmi_val = 0.0
         bmi_cat = "NA"
         if weight > 0 and height > 0:
@@ -105,63 +100,59 @@ with st.form("cvd_research_form", clear_on_submit=True):
             elif bmi_val < 25: bmi_cat = "2=Normal"
             elif bmi_val < 30: bmi_cat = "3=Overweight"
             else: bmi_cat = "4=Obese"
-        st.info(f"5.3. Calculated BMI: {bmi_val}")
-        st.write(f"**5.4. BMI Category:** {bmi_cat}")
+        st.info(f"5.3. BMI: {bmi_val} | 5.4. Category: {bmi_cat}")
     st.divider()
 
-    # --- SECTION 6: BIOCHEMICAL & COMORBIDITY ---
-    st.markdown("### Section 6: Biochemical & Comorbidity Profile")
-    col9, col10 = st.columns(2)
-    with col9:
-        dm = st.selectbox("6.1. Diabetes Mellitus (DM)", ["1=Yes", "2=No"])
-        ckd = st.selectbox("6.2. Chronic Kidney Disease (CKD)", ["1=Yes", "2=No"])
-        prot = st.selectbox("6.3. Proteinuria", ["1=Positive", "2=Negative"])
-    with col10:
-        chol = st.text_input("6.4. Total Cholesterol (mg/dL)", value="NA")
-        comp = st.selectbox("6.5. Baseline Complications", ["1=None", "2=Prior Stroke", "3=Prior Cardiac Issues"])
+    # --- SECTION 6 & 7 ---
+    st.markdown("### Section 6 & 7: Biochemical & Treatment")
+    c4, c5 = st.columns(2)
+    dm = c4.selectbox("6.1. DM", ["1=Yes", "2=No"])
+    ckd = c4.selectbox("6.2. CKD", ["1=Yes", "2=No"])
+    prot = c4.selectbox("6.3. Proteinuria", ["1=Positive", "2=Negative"])
+    chol = c5.text_input("6.4. Total Cholesterol (mg/dL)")
+    comp = c5.selectbox("6.5. Baseline Complications", ["1=None", "2=Prior Stroke", "3=Prior Cardiac Issues"])
+    
+    st.write("**Treatment:**")
+    tx_type = st.selectbox("7.1. Meds Type", ["1=Monotherapy", "2=Dual", "3=Polytherapy"])
+    tx_class = st.multiselect("7.2. Specific Class", ["1=ACEi/ARB", "2=CCB", "3=Diuretics", "4=Beta-Blockers"])
+    adh = st.selectbox("7.3. Medication Adherence", ["1=Good", "2=Poor"])
     st.divider()
 
-    # --- SECTION 7: TREATMENT & MANAGEMENT ---
-    st.markdown("### Section 7: Treatment & Management Factors")
-    tx_type = st.selectbox("7.1. Type of Antihypertensive Meds", ["1=Monotherapy", "2=Dual", "3=Polytherapy"])
-    tx_class = st.multiselect("7.2. Specific Class (Select all that apply)", ["1=ACEi/ARB", "2=CCB", "3=Diuretics", "4=Beta-Blockers"])
-    adh = st.selectbox("7.3. Medication Adherence (≥80%)", ["1=Good", "2=Poor"])
-    st.divider()
-
-    # --- SECTION 8: OUTCOME & SURVIVAL ---
+    # --- SECTION 8: OUTCOME & SURVIVAL (ሁሉም ጥያቄዎች እዚህ አሉ) ---
     st.markdown("### Section 8: Outcome & Survival Data")
     ev = st.selectbox("8.1. CVD Event Occurred?", ["2=No", "1=Yes"])
-    ev_type = st.selectbox("8.2. Type of CVD Event", ["1=Stroke", "2=MI", "3=Heart Failure"]) if "Yes" in ev else "NA"
-    ev_date = st.text_input("8.3. Date of CVD Event (E.C.)") if "Yes" in ev else "NA"
+    
+    # 8.2 & 8.3 ጥያቄዎች ሁልጊዜ እንዲታዩ ተደርገዋል
+    ev_type = st.selectbox("8.2. If CVD Event occurred, Type of Event", ["NA", "1=Stroke", "2=MI", "3=Heart Failure"])
+    ev_date = st.text_input("8.3. If CVD Event occurred, Date of Event (E.C.)", value="NA")
     
     censor = st.selectbox("8.4. Censoring Details", ["1=Not Censored", "2=Lost to Follow-up", "3=Died (Non-CVD)", "4=Study ended"])
-    c_date = st.text_input("8.5. Date of Last Follow-up/Censoring (E.C.)") if censor != "1=Not Censored" else "NA"
+    
+    # 8.5 ጥያቄ ሁልጊዜ እንዲታይ ተደርጓል
+    c_date = st.text_input("8.5. If 8.4 is NOT Choice 1, Date of Last Follow-up/Censoring (E.C.)", value="NA")
 
     # Submission
-    submit = st.form_submit_button("🚀 Submit Record to Database")
+    submit = st.form_submit_button("🚀 Submit Record")
     if submit:
-        if not s_id or not mrn:
-            st.error("Please enter Study ID and Patient MRN!")
-        else:
-            df = pd.DataFrame([{
-                "Study_ID": s_id, "Facility_Name": fac, "Patient_MRN": mrn, "Cohort_Group": cohort,
-                "Enrollment_Date_EC": d_enroll, "Followup_End_Date_EC": d_end, "Age_Eligible_2_1": age_elig,
-                "Preexisting_CVD_2_2": pre_cvd, "Pregnancy_HTN_2_3": preg_htn, "Age_3_1": age, "Sex_3_2": sex,
-                "Residence_3_3": res, "Educational_Status_3_4": edu, "Occupational_Status_3_5": occ,
-                "Occupation_Other_Detail": occ_oth, "Marital_Status_3_6": marital, "Tobacco_Use_4_1": tob,
-                "Alcohol_Consumption_4_2": alc, "Alcohol_Drinks_Per_Day": alc_qty, "Khat_Chewing_4_3": khat,
-                "Physical_Activity_4_4": phys, "Salt_Intake_4_5": salt, "Baseline_SBP_5_1": sbp,
-                "Baseline_DBP_5_1": dbp, "HTN_Stage_5_2": htn_stage, "Weight_kg_5_3": weight,
-                "Height_cm_5_3": height, "Calculated_BMI_5_3": bmi_val, "BMI_Category_5_4": bmi_cat,
-                "Duration_HTN_Months_5_5": dur_htn, "Family_History_5_6": fam_hx, "Diabetes_Mellitus_6_1": dm,
-                "CKD_6_2": ckd, "Proteinuria_6_3": prot, "Total_Cholesterol_6_4": chol,
-                "Baseline_Complications_6_5": comp, "Treatment_Type_7_1": tx_type, "Med_Class_7_2": str(tx_class),
-                "Med_Adherence_7_3": adh, "CVD_Event_Occurred_8_1": ev, "CVD_Event_Type_8_2": ev_type,
-                "CVD_Event_Date_8_3": ev_date, "Censoring_Details_8_4": censor, "Censoring_Date_8_5": c_date,
-                "Data_Collector": "Belay Melaku", "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }])
-            existing = conn.read()
-            updated = pd.concat([existing, df], ignore_index=True)
-            conn.update(data=updated)
-            st.success("✅ Record Successfully Saved!")
-            st.balloons()
+        df = pd.DataFrame([{
+            "Study_ID": s_id, "Facility_Name": fac, "Patient_MRN": mrn, "Cohort_Group": cohort,
+            "Enrollment_Date_EC": d_enroll, "Followup_End_Date_EC": d_end, "Age_Eligible_2_1": age_elig,
+            "Preexisting_CVD_2_2": pre_cvd, "Pregnancy_HTN_2_3": preg_htn, "Age_3_1": age, "Sex_3_2": sex,
+            "Residence_3_3": res, "Educational_Status_3_4": edu, "Occupational_Status_3_5": occ,
+            "Occupation_Other_Detail": occ_oth if occ_oth else "NA", "Marital_Status_3_6": marital, "Tobacco_Use_4_1": tob,
+            "Alcohol_Consumption_4_2": alc, "Alcohol_Drinks_Per_Day": alc_qty if alc_qty else "0", "Khat_Chewing_4_3": khat,
+            "Physical_Activity_4_4": phys, "Salt_Intake_4_5": salt, "Baseline_SBP_5_1": sbp,
+            "Baseline_DBP_5_1": dbp, "HTN_Stage_5_2": htn_stage, "Weight_kg_5_3": weight,
+            "Height_cm_5_3": height, "Calculated_BMI_5_3": bmi_val, "BMI_Category_5_4": bmi_cat,
+            "Duration_HTN_Months_5_5": dur_htn, "Family_History_5_6": fam_hx, "Diabetes_Mellitus_6_1": dm,
+            "CKD_6_2": ckd, "Proteinuria_6_3": prot, "Total_Cholesterol_6_4": chol if chol else "NA",
+            "Baseline_Complications_6_5": comp, "Treatment_Type_7_1": tx_type, "Med_Class_7_2": str(tx_class),
+            "Med_Adherence_7_3": adh, "CVD_Event_Occurred_8_1": ev, "CVD_Event_Type_8_2": ev_type,
+            "CVD_Event_Date_8_3": ev_date, "Censoring_Details_8_4": censor, "Censoring_Date_8_5": c_date,
+            "Data_Collector": "Belay Melaku", "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }])
+        existing = conn.read()
+        updated = pd.concat([existing, df], ignore_index=True)
+        conn.update(data=updated)
+        st.success("✅ Record Successfully Saved!")
+        st.balloons()
